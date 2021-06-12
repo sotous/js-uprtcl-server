@@ -1418,13 +1418,17 @@ export class UprtclRepository {
               parentEcoContext${perspectiveId} as context
             }
           }
-          emptyPlaceHolder${perspectiveId}(func: uid(parentEcoContext${perspectiveId}))
+          emptyPlaceHolder${perspectiveId}(func: uid(parentEcoContext${perspectiveId}, officialEcoContext${perspectiveId}))
            independent${perspectiveId} as var(func: uid(0x01))
-           eveeContext${perspectiveId}(func: uid(officialEcoContext${perspectiveId}, officialTopContext${perspectiveId})) {
-              allForks${perspectiveId} as ~context @filter(not(uid(topElement${perspectiveId}, ecoPersps${perspectiveId}))) {
-                xid
-              }
-            }`);
+           ${
+             independentOf !== undefined
+               ? `allForks${perspectiveId} as var(func: uid(0x01))`
+               : `eveeContext${perspectiveId}(func: uid(officialEcoContext${perspectiveId}, officialTopContext${perspectiveId})) {
+                allForks${perspectiveId} as ~context @filter(not(uid(topElement${perspectiveId}, ecoPersps${perspectiveId}))) {
+                  xid
+                }
+              }`
+           }`);
       }
     }
 
