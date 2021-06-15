@@ -46,6 +46,7 @@ import {
 // import { EveesHttp } from '@uprtcl/evees-http';
 import { Join } from './uprtcl.repository';
 import { Test } from 'supertest';
+import { join } from 'path';
 
 const httpCidConfig: any = {
   version: 1,
@@ -1324,6 +1325,38 @@ describe('routes', async () => {
     done();
   });
 
+  test('-> inner -> above -> -1', async (done) => {
+    const result = await explore(
+      {
+        start: {
+          joinType: Join.inner,
+          elements: [
+            {
+              id: p1children[1],
+              direction: 'above',
+              forks: {},
+            },
+            {
+              id: p221,
+              direction: 'above',
+              forks: {},
+            },
+          ],
+        },
+      },
+      userScenarioB
+    );
+
+    expect(result.data.perspectiveIds).toHaveLength(5);
+    expect(result.data.perspectiveIds[0]).toEqual(p31);
+    expect(result.data.perspectiveIds[1]).toEqual(p2children[1]);
+    expect(result.data.perspectiveIds[2]).toEqual(p2);
+    expect(result.data.perspectiveIds[3]).toEqual(p1.pages[0].id);
+    expect(result.data.perspectiveIds[4]).toEqual(p1children[1]);
+
+    done();
+  });
+
   test('-> inner -> exclusive -> above -> -1', async (done) => {
     const result = await explore(
       {
@@ -1331,7 +1364,7 @@ describe('routes', async () => {
           joinType: Join.inner,
           elements: [
             {
-              id: p1children[0],
+              id: p1children[1],
               direction: 'above',
               forks: {
                 exclusive: true,
@@ -1388,5 +1421,169 @@ describe('routes', async () => {
     done();
   });
 
-  // TODO: Test exclusive: false and all forks
+  test('→ inner→ exclusive → independent → independentOf → above → -1', async (done) => {
+    const result = await explore(
+      {
+        start: {
+          joinType: Join.inner,
+          elements: [
+            {
+              id: p1children[1],
+              direction: 'above',
+              forks: {
+                exclusive: true,
+                independent: true,
+                independentOf: p1children[0],
+              },
+            },
+            {
+              id: p221,
+              direction: 'above',
+              forks: {
+                exclusive: true,
+                independent: true,
+                independentOf: p1children[0],
+              },
+            },
+          ],
+        },
+      },
+      userScenarioB
+    );
+    expect(result.data.perspectiveIds).toHaveLength(1);
+    expect(result.data.perspectiveIds[0]).toEqual(p31);
+    done();
+  });
+
+  test('-> inner -> exclusive -> under -> >0', async (done) => {
+    const result = await explore(
+      {
+        start: {
+          joinType: Join.inner,
+          elements: [
+            {
+              id: p1.pages[0].id,
+              direction: 'under',
+              levels: 1,
+              forks: {
+                exclusive: true,
+              },
+            },
+            {
+              id: p2,
+              direction: 'under',
+              levels: 1,
+              forks: {
+                exclusive: true,
+              },
+            },
+          ],
+        },
+      },
+      userScenarioB
+    );
+
+    expect(result.data.perspectiveIds).toHaveLength(1);
+    expect(result.data.perspectiveIds[0]).toEqual(p31);
+    done();
+  });
+
+  test('-> inner -> exclusive -> independent -> under -> >0', async (done) => {
+    const result = await explore(
+      {
+        start: {
+          joinType: Join.inner,
+          elements: [
+            {
+              id: p1.pages[0].id,
+              direction: 'under',
+              levels: 1,
+              forks: {
+                independent: true,
+                exclusive: true,
+              },
+            },
+            {
+              id: p2,
+              direction: 'under',
+              levels: 1,
+              forks: {
+                independent: true,
+                exclusive: true,
+              },
+            },
+          ],
+        },
+      },
+      userScenarioB
+    );
+
+    expect(result.data.perspectiveIds).toHaveLength(1);
+    expect(result.data.perspectiveIds[0]).toEqual(p31);
+    done();
+  });
+
+  test('-> inner -> exclusive -> independent -> independentOf -> under -> >0', async (done) => {
+    const result = await explore(
+      {
+        start: {
+          joinType: Join.inner,
+          elements: [
+            {
+              id: p1.pages[0].id,
+              direction: 'under',
+              levels: 1,
+              forks: {
+                independent: true,
+                independentOf: p31,
+                exclusive: true,
+              },
+            },
+            {
+              id: p2,
+              direction: 'under',
+              levels: 1,
+              forks: {
+                independent: true,
+                independentOf: p31,
+                exclusive: true,
+              },
+            },
+          ],
+        },
+      },
+      userScenarioB
+    );
+
+    expect(result.data.perspectiveIds).toHaveLength(1);
+    expect(result.data.perspectiveIds[0]).toEqual(p31);
+    done();
+  });
+
+  test('search forks within the ecosystem or children of many perspectives (level 1 and level -1 | multiple under elements)', async (done) => {
+    const result = await explore(
+      {
+        start: {
+          elements: [
+            {
+              id: p1.pages[0].id,
+              forks: {},
+            },
+          ],
+        },
+      },
+      userScenarioB
+    );
+
+    expect(result.data.perspectiveIds).toHaveLength(7);
+    expect(result.data.perspectiveIds[0]).toEqual(p31);
+    expect(result.data.perspectiveIds[1]).toEqual(p2children[1]);
+    expect(result.data.perspectiveIds[2]).toEqual(p2);
+    expect(result.data.perspectiveIds[3]).toEqual(p2children[0]);
+    expect(result.data.perspectiveIds[4]).toEqual(p1.pages[0].id);
+    expect(result.data.perspectiveIds[5]).toEqual(p1children[0]);
+    expect(result.data.perspectiveIds[6]).toEqual(p1children[1]);
+
+    done();
+  });
 });
