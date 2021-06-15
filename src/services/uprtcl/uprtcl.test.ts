@@ -1209,8 +1209,12 @@ describe('routes', async () => {
       userScenarioB
     );
 
-    expect(result.data.perspectiveIds.length).toEqual(1);
+    expect(result.data.perspectiveIds.length).toEqual(4);
     expect(result.data.perspectiveIds[0]).toEqual(p31);
+    expect(result.data.perspectiveIds[1]).toEqual(p2children[1]);
+    expect(result.data.perspectiveIds[2]).toEqual(p2);
+    expect(result.data.perspectiveIds[3]).toEqual(p2children[0]);
+
     done();
   });
 
@@ -1221,7 +1225,7 @@ describe('routes', async () => {
           joinType: Join.full,
           elements: [
             {
-              id: p2children[1],
+              id: p2children[1], //p22
               forks: {
                 independentOf: p2,
                 exclusive: true,
@@ -1233,13 +1237,13 @@ describe('routes', async () => {
       userScenarioB
     );
 
-    expect(result.data.perspectiveIds.length).toEqual(2);
-    expect(result.data.perspectiveIds[0]).toEqual(p421);
-    expect(result.data.perspectiveIds[1]).toEqual(p31);
+    expect(result.data.perspectiveIds.length).toEqual(1);
+    expect(result.data.perspectiveIds[0]).toEqual(p31);
 
     done();
   });
 
+  // It tests all forks for each given element.
   test('search forks within the ecosystem or children of many perspectives (level 1 and level -1 | multiple under elements)', async (done) => {
     const result = await explore(
       {
@@ -1267,8 +1271,14 @@ describe('routes', async () => {
     );
 
     // Results with level 1
-    expect(result.data.perspectiveIds.length).toEqual(1);
+    expect(result.data.perspectiveIds.length).toEqual(7);
     expect(result.data.perspectiveIds[0]).toEqual(p31);
+    expect(result.data.perspectiveIds[1]).toEqual(p2children[1]);
+    expect(result.data.perspectiveIds[2]).toEqual(p2);
+    expect(result.data.perspectiveIds[3]).toEqual(p2children[0]);
+    expect(result.data.perspectiveIds[4]).toEqual(p1.pages[0].id);
+    expect(result.data.perspectiveIds[5]).toEqual(p1children[0]);
+    expect(result.data.perspectiveIds[6]).toEqual(p1children[1]);
 
     const resultEcosystem = await explore(
       {
@@ -1294,9 +1304,16 @@ describe('routes', async () => {
     );
 
     // Results with level -1
-    expect(resultEcosystem.data.perspectiveIds.length).toEqual(2);
+    expect(resultEcosystem.data.perspectiveIds).toHaveLength(9);
     expect(resultEcosystem.data.perspectiveIds[0]).toEqual(p421);
     expect(resultEcosystem.data.perspectiveIds[1]).toEqual(p31);
+    expect(resultEcosystem.data.perspectiveIds[2]).toEqual(p321);
+    expect(resultEcosystem.data.perspectiveIds[3]).toEqual(p2children[1]);
+    expect(resultEcosystem.data.perspectiveIds[4]).toEqual(p2);
+    expect(resultEcosystem.data.perspectiveIds[5]).toEqual(p2children[0]);
+    expect(resultEcosystem.data.perspectiveIds[6]).toEqual(p1.pages[0].id);
+    expect(resultEcosystem.data.perspectiveIds[7]).toEqual(p1children[0]);
+    expect(resultEcosystem.data.perspectiveIds[8]).toEqual(p1children[1]);
     done();
   });
 
@@ -1339,7 +1356,7 @@ describe('routes', async () => {
     done();
   });
 
-  test('-> inner -> exclusive -> above -> -1', async (done) => {
+  test('-> inner -> independent -> exclusive -> above -> -1', async (done) => {
     const result = await explore(
       {
         start: {
