@@ -19,7 +19,7 @@ import {
   forkPerspective,
 } from './uprtcl.testsupport';
 import { createUser, TestUser } from '../user/user.testsupport';
-//import { DocumentsModule } from '@uprtcl/documents';
+import { DocumentsModule } from '@uprtcl/documents';
 import {
   addPermission,
   setPublicPermission,
@@ -42,8 +42,8 @@ import {
   AppElement,
   AppElements,
 } from '@uprtcl/evees';
-// import { HttpSupertest } from '@uprtcl/http-provider';
-// import { EveesHttp } from '@uprtcl/evees-http';
+import { HttpSupertest } from '@uprtcl/http-provider';
+import { EveesHttp } from '@uprtcl/evees-http';
 import { Join } from './uprtcl.repository';
 import { Test } from 'supertest';
 import { join } from 'path';
@@ -684,7 +684,7 @@ describe('routes', async () => {
     // Emulate the user
 
     // const user = await createUser('seed1');
-    // //const homeSpace = await createHomeSpace(user);
+    // // //const homeSpace = await createHomeSpace(user);
 
     // const httpConnection = await new HttpSupertest(
     //   process.env.HOST as string,
@@ -694,8 +694,8 @@ describe('routes', async () => {
     // const httpEvees = new EveesHttp(httpConnection);
 
     // const remotes = [httpEvees];
-    //const modules = new Map<string, EveesContentModule>();
-    //modules.set(DocumentsModule.id, new DocumentsModule());
+    // const modules = new Map<string, EveesContentModule>();
+    // modules.set(DocumentsModule.id, new DocumentsModule());
 
     //const evees = init(remotes, modules);
 
@@ -1202,6 +1202,7 @@ describe('routes', async () => {
               id: p1.pages[0].id,
               forks: {
                 exclusive: true,
+                independent: true,
               },
             },
           ],
@@ -1210,11 +1211,8 @@ describe('routes', async () => {
       userScenarioB
     );
 
-    expect(result.data.perspectiveIds.length).toEqual(4);
+    expect(result.data.perspectiveIds.length).toEqual(1);
     expect(result.data.perspectiveIds[0]).toEqual(p31);
-    expect(result.data.perspectiveIds[1]).toEqual(p2children[1]);
-    expect(result.data.perspectiveIds[2]).toEqual(p2);
-    expect(result.data.perspectiveIds[3]).toEqual(p2children[0]);
 
     done();
   });
@@ -1228,6 +1226,7 @@ describe('routes', async () => {
             {
               id: p2children[1], //p22
               forks: {
+                independent: true,
                 independentOf: p2,
                 exclusive: true,
               },
@@ -1238,8 +1237,9 @@ describe('routes', async () => {
       userScenarioB
     );
 
-    expect(result.data.perspectiveIds.length).toEqual(1);
-    expect(result.data.perspectiveIds[0]).toEqual(p31);
+    expect(result.data.perspectiveIds.length).toEqual(2);
+    expect(result.data.perspectiveIds[0]).toEqual(p421);
+    expect(result.data.perspectiveIds[1]).toEqual(p31);
 
     done();
   });
