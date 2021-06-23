@@ -1360,7 +1360,7 @@ export class UprtclRepository {
       query = query.concat(`
         independent${perspectiveId} as var(func: uid(0x01))
         ${
-          independentOf !== undefined
+          independentOf !== undefined || independent
             ? `allForks${perspectiveId} as var(func: uid(0x01))`
             : `eveeContext${perspectiveId}(func: uid(officialTopContext${perspectiveId})) {
               allForks${perspectiveId} as ~context @filter(not(uid(topElement${perspectiveId}))) {
