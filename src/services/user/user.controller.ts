@@ -55,7 +55,6 @@ export class UserController {
         path: '/uprtcl/1/user/:userId/nonce',
         method: 'get',
         handler: [
-          checkJwt,
           async (req: any, res: Response) => {
             const user = req.params.userId;
             const valid = isValidUser(user);
@@ -76,7 +75,6 @@ export class UserController {
         path: '/uprtcl/1/user/:userId/authorize',
         method: 'put',
         handler: [
-          checkJwt,
           async (req: any, res: Response) => {
             const jwt = await this.userService.getJwt(
               req.params.userId,
