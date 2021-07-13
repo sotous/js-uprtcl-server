@@ -1,6 +1,14 @@
 import { Entity } from '@uprtcl/evees';
 import { DGraphService } from '../../db/dgraph.service';
 import { DataRepository } from '../data/data.repository';
+
+const propertyOrder = [
+  'creatorsIds',
+  'dataId',
+  'message',
+  'timestamp',
+  'parentsIds',
+];
 export class DataService {
   constructor(
     protected db: DGraphService,
@@ -24,5 +32,12 @@ export class DataService {
   async getData(hash: string): Promise<Entity> {
     let entities = await this.dataRepo.getDatas([hash]);
     return entities[0];
+  }
+
+  commitFilter(data: any) {
+    return (
+      data.object.payload !== undefined &&
+      propertyOrder.every((p) => data.object.payload.hasOwnProperty(p))
+    );
   }
 }

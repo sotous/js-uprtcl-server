@@ -8,14 +8,6 @@ import {
   PostEntityResult,
   GetResult,
 } from '../../utils';
-
-const propertyOrder = [
-  'creatorsIds',
-  'dataId',
-  'message',
-  'timestamp',
-  'parentsIds',
-];
 declare global {
   namespace Express {
     interface Request {
@@ -23,13 +15,6 @@ declare global {
     }
   }
 }
-
-const commitFilter = (data: any) => {
-  return (
-    data.object.payload !== undefined &&
-    propertyOrder.every((p) => data.object.payload.hasOwnProperty(p))
-  );
-};
 
 export class DataController {
   constructor(
@@ -48,13 +33,13 @@ export class DataController {
             const allDatas = req.body.datas;
 
             /** all entities are stored in plain text */
-            const resultDatas = await this.dataService.createDatas(
-              allDatas,
-              getUserFromReq(req)
+            const commits = allDatas.filter((data: any) =>
+              this.dataService.commitFilter(data)
             );
-
             /** explicitely store structured commits to link them to other elements */
-            const commits = allDatas.filter((data: any) => commitFilter(data));
+            const datas = allDatas.filter(
+              (data: any) => !this.dataService.commitFilter(data)
+            );
 
             const resultCommits = await this.uprtclService.createCommits(
               commits,
@@ -64,10 +49,7 @@ export class DataController {
             let result: PostEntityResult = {
               result: SUCCESS,
               message: '',
-              entities: Array.prototype.concat(
-                [],
-                resultDatas.concat(resultCommits)
-              ),
+              entities: Array.prototype.concat([], datas.concat(resultCommits)),
             };
             res.status(200).send(result);
           },
