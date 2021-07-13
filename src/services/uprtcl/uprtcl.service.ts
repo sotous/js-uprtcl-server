@@ -11,7 +11,7 @@ import {
   SearchResult,
   condensateUpdates,
   EntityResolver,
-  SearchForkOptions,
+  EveesMutationCreate,
 } from '@uprtcl/evees';
 
 import { PermissionType } from './types';
@@ -21,6 +21,13 @@ import { UprtclRepository } from './uprtcl.repository';
 import { NOT_AUTHORIZED_MSG } from '../../utils';
 import { DataService } from '../data/data.service';
 import { LocalEntityResolver } from './local.entity.resolver';
+
+export interface EveesMutationResult {
+  newPerspectives?: string[];
+  updates?: string[];
+  deletedPerspectives?: string[];
+  entities?: string[];
+}
 
 export class UprtclService {
   entityResolver: EntityResolver;
@@ -81,7 +88,7 @@ export class UprtclService {
   async updatePerspectives(
     updates: Update[],
     loggedUserId: string | null
-  ): Promise<void> {
+  ): Promise<string[]> {
     /**
      * What about the access control? We might need to find a way to check
      * if the user can write a perspective, we used to call access.can(id, userId, permisstions)
@@ -101,14 +108,13 @@ export class UprtclService {
     if (!canUpdate)
       throw new Error('Anonymous user. Cant update a perspective');
 
-    const result = await this.uprtclRepo.updatePerspectives(updatesSingle);
-    console.log('[UPRTCL-SERVICE] updatePerspectives', { result });
+    return await this.uprtclRepo.updatePerspectives(updatesSingle);
   }
 
   async deletePerspective(
     perspectiveIds: string[],
     loggedUserId: string | null
-  ): Promise<void> {
+  ): Promise<string[]> {
     console.log('[UPRTCL-SERVICE] deletePerspective', { perspectiveIds });
     if (loggedUserId === null)
       throw new Error('Anonymous user. Cant delete a perspective');
@@ -121,7 +127,7 @@ export class UprtclService {
     )
       throw new Error(NOT_AUTHORIZED_MSG);
 
-    await this.uprtclRepo.setDeletedPerspectives(perspectiveIds, true);
+    return await this.uprtclRepo.setDeletedPerspectives(perspectiveIds, true);
   }
 
   async getPerspective(
@@ -201,5 +207,60 @@ export class UprtclService {
       getPerspectiveOptions,
       loggedUserId
     );
+  }
+
+  async updateSu(
+    mutation: EveesMutationCreate,
+    loggedUserId: string | null
+  ): Promise<EveesMutationResult> {
+    let result: EveesMutationResult = {
+      entities: [],
+      newPerspectives: [],
+      deletedPerspectives: [],
+      updates: [],
+    };
+
+    if (mutation.entities && mutation.entities.length > 0) {
+      const allData = mutation.entities;
+      const commits = allData.filter((data: any) =>
+        this.dataService.commitFilter(data)
+      );
+      const datas = allData.filter(
+        (data: any) => !this.dataService.commitFilter(data)
+      );
+
+      await this.dataService.createDatas(datas, loggedUserId);
+      await this.createCommits(commits, loggedUserId);
+
+      result.entities = [
+        ...commits.map((commit) => commit.hash),
+        ...datas.map((data) => data.hash),
+      ];
+    }
+
+    if (mutation.newPerspectives && mutation.newPerspectives.length > 0) {
+      result.newPerspectives = await this.createAndInitPerspectives(
+        mutation.newPerspectives,
+        loggedUserId
+      );
+    }
+
+    if (
+      mutation.deletedPerspectives &&
+      mutation.deletedPerspectives.length > 0
+    ) {
+      result.deletedPerspectives = await this.deletePerspective(
+        mutation.deletedPerspectives,
+        loggedUserId
+      );
+    }
+
+    if (mutation.updates && mutation.updates.length > 0) {
+      result.updates = await this.updatePerspectives(
+        mutation.updates,
+        loggedUserId
+      );
+    }
+    return result;
   }
 }
