@@ -354,7 +354,7 @@ export class UprtclRepository {
     return { query, nquads };
   }
 
-  async updatePerspectives(updates: Update[]): Promise<void> {
+  async updatePerspectives(updates: Update[]): Promise<string[]> {
     let childrenUpsert: Upsert = { nquads: ``, delNquads: ``, query: `` };
     let ecoUpsert: Upsert = { query: ``, nquads: ``, delNquads: `` };
 
@@ -444,7 +444,10 @@ export class UprtclRepository {
       });
       const result = await this.db.callRequest(ecoRequest);
       console.log('[DGRAPH] updatePerspectives - result', { result });
+      return updates.map((update) => update.perspectiveId);
     }
+
+    return [];
   }
 
   updatePerspectiveUpsert(update: Update, upsert: Upsert) {
@@ -714,7 +717,7 @@ export class UprtclRepository {
   async setDeletedPerspectives(
     perspectiveIds: string[],
     deleted: boolean
-  ): Promise<void> {
+  ): Promise<string[]> {
     await this.db.ready();
 
     /**  */
@@ -741,6 +744,7 @@ export class UprtclRepository {
       { upsert },
       result.getUidsMap().toArray()
     );
+    return perspectiveIds;
   }
 
   async findPerspectives(context: string): Promise<string[]> {
