@@ -46,10 +46,18 @@ export class DataController {
               getUserFromReq(req)
             );
 
+            const resultDatas = await this.dataService.createDatas(
+              allDatas,
+              getUserFromReq(req)
+            );
+
             let result: PostEntityResult = {
               result: SUCCESS,
               message: '',
-              entities: Array.prototype.concat([], datas.concat(resultCommits)),
+              entities: Array.prototype.concat(
+                [],
+                resultDatas.concat(resultCommits)
+              ),
             };
             res.status(200).send(result);
           },
