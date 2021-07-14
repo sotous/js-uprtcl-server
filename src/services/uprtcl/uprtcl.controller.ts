@@ -257,6 +257,31 @@ export class UprtclController {
           },
         ],
       },
+      {
+        path: '/uprtcl/1/update-su',
+        method: 'put',
+        handler: [
+          checkJwt,
+          async (req: Request, res: Response) => {
+            const perspectives = await this.uprtclService.updateSu(
+              req.body.mutation,
+              getUserFromReq(req)
+            );
+
+            try {
+              res.status(200).send({});
+            } catch (error) {
+              console.error(error);
+              let result: PostResult = {
+                result: ERROR,
+                message: error.message,
+                elementIds: [],
+              };
+              res.status(400).send(result);
+            }
+          },
+        ],
+      },
     ];
   }
 }
