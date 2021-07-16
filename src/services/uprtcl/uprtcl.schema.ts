@@ -38,6 +38,7 @@ type ${PERSPECTIVE_SCHEMA_NAME} {
   can${PermissionType.Read}: [${PROFILE_SCHEMA_NAME}]
   can${PermissionType.Write}: [${PROFILE_SCHEMA_NAME}]
   can${PermissionType.Admin}: [${PROFILE_SCHEMA_NAME}]
+  isExternal: bool
 }
 
 type ${CONTEXT_SCHEMA_NAME} {
@@ -86,4 +87,5 @@ publicWrite: bool @index(bool) .
 delegate: bool .
 delegateTo: uid @reverse .
 finDelegatedTo: uid @reverse .
+isExternal: bool .
 `;
