@@ -64,7 +64,8 @@ export class UprtclService {
 
   async createAndInitPerspectives(
     newPerspectives: NewPerspective[],
-    loggedUserId: string | null
+    loggedUserId: string | null,
+    isExternal?: boolean
   ): Promise<string[]> {
     // TEMP
 
@@ -76,7 +77,11 @@ export class UprtclService {
       loggedUserId
     );
 
-    await this.uprtclRepo.createPerspectives(newPerspectives, loggedUserId);
+    await this.uprtclRepo.createPerspectives(
+      newPerspectives,
+      loggedUserId,
+      isExternal
+    );
 
     await this.uprtclRepo.updatePerspectives(
       newPerspectives.map((newPerspective) => newPerspective.update)
@@ -209,10 +214,19 @@ export class UprtclService {
     );
   }
 
+  /** We emulate the Http Remote Client update process here in the server
+   * to mirror perspectives from other platforms.
+   */
   async updateSu(
     mutation: EveesMutationCreate,
     loggedUserId: string | null
   ): Promise<EveesMutationResult> {
+    const microservices = JSON.parse(process.env.MICROSERVICES || '');
+
+    if (!microservices.includes(loggedUserId)) {
+      throw new Error('Not authorized.');
+    }
+
     let result: EveesMutationResult = {
       entities: [],
       newPerspectives: [],
@@ -241,7 +255,8 @@ export class UprtclService {
     if (mutation.newPerspectives && mutation.newPerspectives.length > 0) {
       result.newPerspectives = await this.createAndInitPerspectives(
         mutation.newPerspectives,
-        loggedUserId
+        loggedUserId,
+        true
       );
     }
 
