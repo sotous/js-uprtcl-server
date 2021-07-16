@@ -110,12 +110,76 @@ export class UprtclRepository {
     protected dataRepo: DataRepository
   ) {}
 
+  setDefaultPermissionsNquads(
+    perspId: string,
+    nquads: string,
+    isExternal: boolean,
+    loggedUserId: string,
+    creatorId: string
+  ): string {
+    if (isExternal) {
+      nquads = nquads.concat(
+        `\nuid(persp${perspId}) <publicRead> "true" .
+         \nuid(persp${perspId}) <publicWrite> "false" .
+         \nuid(persp${perspId}) <canRead> uid(profile${this.userRepo.formatDid(
+          creatorId
+        )}) .
+        \nuid(persp${perspId}) <canWrite> uid(profile${this.userRepo.formatDid(
+          creatorId
+        )}) .
+        \nuid(persp${perspId}) <canAdmin> uid(profile${this.userRepo.formatDid(
+          loggedUserId
+        )}) .
+        \nuid(persp${perspId}) <canAdmin> uid(profile${this.userRepo.formatDid(
+          creatorId
+        )}) .
+        \nuid(persp${perspId}) <isExternal> "true" .`
+      );
+    } else {
+      nquads = nquads.concat(
+        `\nuid(persp${perspId}) <publicRead> "false" .
+         \nuid(persp${perspId}) <publicWrite> "false" .
+         \nuid(persp${perspId}) <canRead> uid(profile${this.userRepo.formatDid(
+          creatorId
+        )}) .
+         \nuid(persp${perspId}) <canWrite> uid(profile${this.userRepo.formatDid(
+          creatorId
+        )}) .
+         \nuid(persp${perspId}) <canAdmin> uid(profile${this.userRepo.formatDid(
+          creatorId
+        )}) .`
+      );
+    }
+    return nquads;
+  }
+
+  upsertProfile(
+    upsertedProfiles: string[],
+    did: string,
+    query: string,
+    nquads: string
+  ): Upsert {
+    if (!upsertedProfiles.includes(did)) {
+      const creatorSegment = this.userRepo.upsertQueries(did);
+      upsertedProfiles.push(did);
+
+      query = query.concat(creatorSegment.query);
+      nquads = nquads.concat(creatorSegment.nquads);
+    }
+
+    return {
+      query,
+      nquads,
+    };
+  }
+
   createPerspectiveUpsert(
     upsertedProfiles: string[],
     externalParentIds: string[],
     upsert: Upsert,
     newPerspective: NewPerspective,
-    loggedUserId: string
+    loggedUserId: string,
+    isExternal?: boolean
   ) {
     // Perspective object destructuring
     const {
@@ -128,14 +192,27 @@ export class UprtclRepository {
 
     let { query, nquads } = upsert;
 
-    if (!upsertedProfiles.includes(creatorId)) {
-      upsertedProfiles.push(creatorId);
-      const creatorSegment = this.userRepo.upsertQueries(creatorId);
-      query = query.concat(creatorSegment.query);
-      nquads = nquads.concat(creatorSegment.nquads);
+    if (isExternal) {
+      const profileUpsert = this.upsertProfile(
+        upsertedProfiles,
+        loggedUserId,
+        query,
+        nquads
+      );
+      query = profileUpsert.query;
+      nquads = profileUpsert.nquads;
     }
 
-    if (loggedUserId !== creatorId) {
+    const profileUpsert = this.upsertProfile(
+      upsertedProfiles,
+      creatorId,
+      query,
+      nquads
+    );
+    query = profileUpsert.query;
+    nquads = profileUpsert.nquads;
+
+    if (loggedUserId !== creatorId && !isExternal) {
       throw new Error(
         `Can only store perspectives whose creatorId is the creator, but ${creatorId} is not ${loggedUserId}`
       );
@@ -179,18 +256,12 @@ export class UprtclRepository {
     //-----------------------------//
 
     /** Sets default permissions */
-    nquads = nquads.concat(
-      `\nuid(persp${id}) <publicRead> "false" .
-       \nuid(persp${id}) <publicWrite> "false" .
-       \nuid(persp${id}) <canRead> uid(profile${this.userRepo.formatDid(
-        creatorId
-      )}) .
-       \nuid(persp${id}) <canWrite> uid(profile${this.userRepo.formatDid(
-        creatorId
-      )}) .
-       \nuid(persp${id}) <canAdmin> uid(profile${this.userRepo.formatDid(
-        creatorId
-      )}) .`
+    nquads = this.setDefaultPermissionsNquads(
+      id,
+      nquads,
+      isExternal || false,
+      loggedUserId,
+      creatorId
     );
 
     /** add itself as its ecosystem */
@@ -236,7 +307,8 @@ export class UprtclRepository {
 
   async createPerspectives(
     newPerspectives: NewPerspective[],
-    loggedUserId: string
+    loggedUserId: string,
+    isExternal?: boolean
   ) {
     if (newPerspectives.length === 0) return;
     await this.db.ready();
@@ -281,7 +353,8 @@ export class UprtclRepository {
         externalParentIds as string[],
         upsert,
         newPerspective,
-        loggedUserId
+        loggedUserId,
+        isExternal
       );
 
       if (i < 1) {
