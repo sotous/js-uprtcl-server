@@ -243,7 +243,7 @@ export class UprtclService {
         (data: any) => !this.dataService.commitFilter(data)
       );
 
-      await this.dataService.createDatas(datas, loggedUserId);
+      await this.dataService.createDatas(allData, loggedUserId);
       await this.createCommits(commits, loggedUserId);
 
       result.entities = [
