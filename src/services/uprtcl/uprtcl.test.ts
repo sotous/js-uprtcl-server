@@ -43,7 +43,7 @@ import {
   AppElements,
 } from '@uprtcl/evees';
 import { HttpSupertest } from '@uprtcl/http-provider';
-import { EveesHttp } from '@uprtcl/evees-http';
+//import { EveesHttp } from '@uprtcl/evees-http';
 import { Join } from './uprtcl.repository';
 import { Test } from 'supertest';
 import { join } from 'path';
